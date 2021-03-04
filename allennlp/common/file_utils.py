@@ -54,6 +54,8 @@ from requests.exceptions import ConnectionError
 from requests.packages.urllib3.util.retry import Retry
 import lmdb
 from torch import Tensor
+from huggingface_hub import hf_hub_url, cached_download
+from allennlp.version import VERSION as __version__
 
 from allennlp.common.tqdm import Tqdm
 
@@ -62,6 +64,7 @@ logger = logging.getLogger(__name__)
 CACHE_ROOT = Path(os.getenv("ALLENNLP_CACHE_ROOT", Path.home() / ".allennlp"))
 CACHE_DIRECTORY = str(CACHE_ROOT / "cache")
 DEPRECATED_CACHE_DIRECTORY = str(CACHE_ROOT / "datasets")
+AI2_ARCHIVE_NAME = "archive.tar.gz"
 
 # This variable was deprecated in 0.7.2 since we use a single folder for caching
 # all types of files (datasets, models, etc.)
@@ -235,6 +238,27 @@ def cached_path(
 
     if not isinstance(url_or_filename, str):
         url_or_filename = str(url_or_filename)
+
+    if not os.path.isfile(url_or_filename) and not urlparse(url_or_filename).scheme in ("http", "https"):
+        # If can't be resolved to a path or a URL,
+        # let's try to find it on Hugging Face model hub
+        # e.g. lysandre/pair-classification-roberta-mnli is a valid model id
+        # and  lysandre/pair-classification-roberta-mnli@main supports specifying a commit/branch/tag.
+        if "@" in url_or_filename:
+            repo_id = url_or_filename.split("@")[0]
+            revision = url_or_filename.split("@")[1]
+        else:
+            repo_id = url_or_filename
+            revision = None
+        url = hf_hub_url(
+            repo_id=repo_id, filename=AI2_ARCHIVE_NAME, revision=revision
+        )
+        url_or_filename = cached_download(
+            url=url,
+            library_name="allennlp",
+            library_version=__version__,
+            cache_dir=CACHE_DIRECTORY,
+        )
 
     file_path: str
 
