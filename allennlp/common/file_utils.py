@@ -207,6 +207,7 @@ def cached_path(
     cache_dir: Union[str, Path] = None,
     extract_archive: bool = False,
     force_extract: bool = False,
+    filename: str = None
 ) -> str:
     """
     Given something that might be a URL (or might be a local path),
@@ -229,6 +230,9 @@ def cached_path(
     force_extract : `bool`, optional (default = `False`)
         If `True` and the file is an archive file, it will be extracted regardless
         of whether or not the extracted directory already exists.
+
+    filename : `str`, optional (default = `None`)
+        If passed, will look for that filename on the HuggingFace hub.
     """
     if cache_dir is None:
         cache_dir = CACHE_DIRECTORY
@@ -251,7 +255,7 @@ def cached_path(
             repo_id = url_or_filename
             revision = None
         url = hf_hub_url(
-            repo_id=repo_id, filename=AI2_ARCHIVE_NAME, revision=revision
+            repo_id=repo_id, filename=AI2_ARCHIVE_NAME if filename is None else filename, revision=revision
         )
         url_or_filename = cached_download(
             url=url,

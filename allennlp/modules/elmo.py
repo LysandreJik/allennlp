@@ -293,7 +293,7 @@ class _ElmoCharacterEncoder(torch.nn.Module):
     def __init__(self, options_file: str, weight_file: str, requires_grad: bool = False) -> None:
         super().__init__()
 
-        with open(cached_path(options_file), "r") as fin:
+        with open(cached_path(options_file, filename="options.json"), "r") as fin:
             self._options = json.load(fin)
         self._weight_file = weight_file
 
@@ -390,7 +390,7 @@ class _ElmoCharacterEncoder(torch.nn.Module):
         self._load_projection()
 
     def _load_char_embedding(self):
-        with h5py.File(cached_path(self._weight_file), "r") as fin:
+        with h5py.File(cached_path(self._weight_file, filename="weights.hdf5"), "r") as fin:
             char_embed_weights = fin["char_embed"][...]
 
         weights = numpy.zeros(
@@ -413,7 +413,7 @@ class _ElmoCharacterEncoder(torch.nn.Module):
                 in_channels=char_embed_dim, out_channels=num, kernel_size=width, bias=True
             )
             # load the weights
-            with h5py.File(cached_path(self._weight_file), "r") as fin:
+            with h5py.File(cached_path(self._weight_file, filename="weights.hdf5"), "r") as fin:
                 weight = fin["CNN"]["W_cnn_{}".format(i)][...]
                 bias = fin["CNN"]["b_cnn_{}".format(i)][...]
 
@@ -444,7 +444,7 @@ class _ElmoCharacterEncoder(torch.nn.Module):
         for k in range(n_highway):
             # The AllenNLP highway is one matrix multiplication with concatenation of
             # transform and carry weights.
-            with h5py.File(cached_path(self._weight_file), "r") as fin:
+            with h5py.File(cached_path(self._weight_file, filename="weights.hdf5"), "r") as fin:
                 # The weights are transposed due to multiplication order assumptions in tf
                 # vs pytorch (tf.matmul(X, W) vs pytorch.matmul(W, X))
                 w_transform = numpy.transpose(fin["CNN_high_{}".format(k)]["W_transform"][...])
@@ -466,7 +466,7 @@ class _ElmoCharacterEncoder(torch.nn.Module):
         n_filters = sum(f[1] for f in filters)
 
         self._projection = torch.nn.Linear(n_filters, self.output_dim, bias=True)
-        with h5py.File(cached_path(self._weight_file), "r") as fin:
+        with h5py.File(cached_path(self._weight_file, filename="weights.hdf5"), "r") as fin:
             weight = fin["CNN_proj"]["W_proj"][...]
             bias = fin["CNN_proj"]["b_proj"][...]
             self._projection.weight.data.copy_(torch.FloatTensor(numpy.transpose(weight)))
@@ -531,7 +531,7 @@ class _ElmoBiLm(torch.nn.Module):
             # constructor.
             self.create_cached_cnn_embeddings(vocab_to_cache)
 
-        with open(cached_path(options_file), "r") as fin:
+        with open(cached_path(options_file, filename="options.json"), "r") as fin:
             options = json.load(fin)
         if not options["lstm"].get("use_skip_connections"):
             raise ConfigurationError("We only support pretrained biLMs with residual connections")

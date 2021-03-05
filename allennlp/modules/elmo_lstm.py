@@ -264,7 +264,7 @@ class ElmoLstm(_EncoderBase):
         """
         requires_grad = self.requires_grad
 
-        with h5py.File(cached_path(weight_file), "r") as fin:
+        with h5py.File(cached_path(weight_file, filename="weights.hdf5"), "r") as fin:
             for i_layer, lstms in enumerate(zip(self.forward_layers, self.backward_layers)):
                 for j_direction, lstm in enumerate(lstms):
                     # lstm is an instance of LSTMCellWithProjection
