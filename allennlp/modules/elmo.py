@@ -94,6 +94,16 @@ class Elmo(torch.nn.Module, FromParams):
         ignored with this option.
     """
 
+    @staticmethod
+    def from_hub(
+        identifier,
+        *args,
+        **kwargs
+    ):
+        options_file = '/'.join([identifier, "options.json"])
+        weight_file = '/'.join([identifier, "weights.hdf5"])
+        return Elmo(options_file, weight_file, *args, **kwargs)
+
     def __init__(
         self,
         options_file: str,
